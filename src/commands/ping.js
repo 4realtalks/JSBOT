@@ -1,24 +1,34 @@
-const { EmbedBuilder, Colors } = require("discord.js");
+const { EmbedBuilder, Colors, SlashCommandBuilder } = require("discord.js");
 
 module.exports = {
-  data: {
-    name: "ping",
-    description: "Check bot's latency"
-  },
-  async execute(interaction) {
-    const startTime = Date.now();
-    await interaction.reply("Checking latency...");
+	data: new SlashCommandBuilder()
+		.setName("ping")
+		.setDescription("Check bot latency"),
+	async execute(interaction, options) {
+		const startTime = Date.now();
+		await interaction.reply("Checking latency...");
 
-    const embed = new EmbedBuilder()
-      .setAuthor({
-        name: interaction.client.user.username,
-        iconURL: interaction.client.user.displayAvatarURL()
-      })
-      .setDescription("Pong!")
-      .setColor(Colors.Green)
-      .addField({name: "Latency", value: `${Date.now() - startTime}ms`})
-      .setFooter(Date.now().toString());
+		const embed = new EmbedBuilder()
+			.setAuthor({
+				name: interaction.client.user.username,
+				iconURL: interaction.client.user.displayAvatarURL(),
+			})
+			.setTitle("Pong!")
+			.setColor(Colors.Green)
+			.setFields({ name: "Latency", value: `${Date.now() - startTime}ms` })
+			.setTimestamp(Date.now())
+			.setFooter({
+				text: interaction.client.user.username,
+				iconURL: interaction.client.user.displayAvatarURL(),
+			});
 
-    await interaction.editReply({ embeds: [embed] });
-  }
-}
+		try {
+			await interaction.editReply({ content: "", embeds: [embed] });
+		} catch (error) {
+			await interaction.editReply({
+				content: `There was an error while trying to execute this command.\nError: \`${error}\``,
+			});
+			console.error(error);
+		}
+	},
+};
