@@ -18,21 +18,21 @@ module.exports = {
       fetchReply: true,
     });
 
-    const targetUser = options.getUser("user") || interaction.user;
+    const target = options.getUser("user") || interaction.user;
 
     const embed = new EmbedBuilder()
-      .setAuthor({ name: targetUser.username, iconURL: targetUser.avatarURL() })
-      .setTitle(`${targetUser.username}'s Status`)
+      .setAuthor({ name: target.username, iconURL: target.avatarURL() })
+      .setTitle(`${target.username}'s Status`)
       .setColor(Colors.Green)
       .setDescription(
-        `${targetUser.username}'s status is ${targetUser.presence?.status}`
+        `${target.username}'s status is ${target.presence?.status}`
       )
       .setTimestamp()
       .setFields(
-        { name: "API Latency", value: `${client.ws.ping}ms` },
+        { name: "API Latency", value: `${message.createdTimestamp - interaction.createdTimestamp}ms` },
         {
           name: "Client Ping",
-          value: `${interaction.createdTimestamp - message.createdTimestamp}ms`,
+          value: `${client.ws.ping}ms`,
         }
       )
       .setFooter({
