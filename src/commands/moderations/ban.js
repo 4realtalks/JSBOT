@@ -28,6 +28,7 @@ module.exports = {
 			.setDescription(`Kicked ${target.username}`)
 			.setFields(
 				{ name: "User", value: `${target.user}` },
+				{ name: "Reason", value: reason },
 				{
 					name: "API Latency",
 					value: `${message.createdTimestamp - interaction.createdTimestamp}ms`,

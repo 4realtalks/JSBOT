@@ -25,9 +25,10 @@ module.exports = {
 				iconURL: client.user.avatarURL(),
 			})
 			.setColor(Colors.Red)
-			.setDescription(`Kicked ${target.username}`)
+			.setDescription(`Kicked ${target.user}`)
 			.setFields(
 				{ name: "User", value: `${target.user}` },
+				{ name: "Reason", value: reason },
 				{
 					name: "API Latency",
 					value: `${message.createdTimestamp - interaction.createdTimestamp}ms`,
