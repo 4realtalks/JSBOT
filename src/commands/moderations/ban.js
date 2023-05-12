@@ -13,7 +13,9 @@ module.exports = {
 				.setDescription("Reason for the ban?")
 				.setRequired(false)
 		),
-	async execute(interaction, client, options) {
+	async execute(interaction, client) {
+		const options = interaction.options;
+
 		const message = await interaction.deferReply({ fetchReply: true });
 
 		const target = options.getUser("user");
@@ -25,7 +27,7 @@ module.exports = {
 				iconURL: client.user.avatarURL(),
 			})
 			.setColor(Colors.Red)
-			.setDescription(`Kicked ${target.username}`)
+			.setDescription(`Banned ${target.username}`)
 			.setFields(
 				{ name: "User", value: `${target.user}` },
 				{ name: "Reason", value: reason },
@@ -43,7 +45,7 @@ module.exports = {
 
 		try {
 			if (target !== client.user) {
-				await interaction.guild.members.ban(target, reason);
+				await interaction.guild.members.ban(target, { reason });
 				await interaction.editReply({ content: "", embeds: [embed] });
 			}
 		} catch (error) {
