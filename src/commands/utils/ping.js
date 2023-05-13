@@ -6,9 +6,11 @@ module.exports = {
 		.setName("ping")
 		.setDescription("Check bot's latency"),
 	async execute(interaction, client) {
-		const message = await interaction.deferReply({
-			fetchReply: true,
-		});
+		if (!interaction.deferred) {
+			await interaction.deferReply({ fetchReply: true });
+		}
+
+		const message = await interaction.fetchReply();
 
 		const embed = new EmbedBuilder()
 			.setAuthor({

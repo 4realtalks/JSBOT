@@ -21,9 +21,11 @@ module.exports = {
         .setRequired(false)
     ),
   async execute(interaction, client, options) {
-    const message = await interaction.deferReply({
-      fetchReply: true,
-    });
+    if (!interaction.deferred) {
+      await interaction.deferReply({ fetchReply: true });
+    }
+
+    const message = await interaction.fetchReply();
 
     const target = interaction.options.getMember("user");
     const reason = interaction.options.getString("reason") || "No reason provided";

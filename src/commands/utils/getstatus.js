@@ -14,9 +14,11 @@ module.exports = {
         )
     ),
   async execute(interaction, client, options) {
-    const message = await interaction.deferReply({
-      fetchReply: true,
-    });
+    if (!interaction.deferred) {
+      await interaction.deferReply({ fetchReply: true });
+    }
+
+    const message = await interaction.fetchReply();
 
     const target = options.getUser("user") || interaction.user;
 

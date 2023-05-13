@@ -23,9 +23,11 @@ module.exports = {
 				throw new Error("Channel not found.");
 			}
 
-			const message = await interaction.deferReply({
-				fetchReply: true,
-			});
+			if (!interaction.deferred) {
+				await interaction.deferReply({ fetchReply: true });
+			}
+
+			const message = await interaction.fetchReply();
 
 			const startTime = Date.now();
 			let messagesDeleted = 0;
