@@ -1,5 +1,6 @@
 require("dotenv").config();
-const { DISCORD_BOT_TOKEN } = process.env;
+const JSON_PATH = require("../config.json");
+const { DISCORD_BOT_TOKEN } = JSON_PATH;
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
 const fs = require("fs");
 

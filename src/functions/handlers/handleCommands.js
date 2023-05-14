@@ -1,7 +1,6 @@
-const { REST, Routes } = require("discord.js");
 const fs = require("fs");
-require("dotenv").config();
-const { GUILD_ID, CLIENT_ID, DISCORD_BOT_TOKEN } = process.env;
+const JSON_PATH = require("../../../config.json")
+const { GUILD_ID, CLIENT_ID, DISCORD_BOT_TOKEN } = JSON_PATH;
 
 module.exports = (client) => {
   console.log(`[INFO]: Registering command(s)...`);
