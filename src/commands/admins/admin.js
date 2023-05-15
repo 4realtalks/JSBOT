@@ -1,7 +1,7 @@
 require("dotenv").config();
 const { SlashCommandBuilder, EmbedBuilder, Colors } = require("discord.js");
 const axios = require("axios");
-const JSON_PATH = require("../../../config.json")
+const JSON_PATH = require("../../../config.json");
 const { OPENCLOUD_KEY, UNIVERSE_ID, ENTRY_KEY } = JSON_PATH;
 const crypto = require("crypto");
 
@@ -71,11 +71,13 @@ module.exports = {
 		if (subcommand === "register") {
 			const robloxusername = options.getString("user");
 			const active = options.getBoolean("active") || true;
-			let userId = 0;
-			let response = null;
+			let userId = undefined;
+			let response = undefined;
+			let datastore = undefined;
+			let postresponse = undefined;
 
-			try {
-				response = await axios.post(
+			response = await axios
+				.post(
 					"https://users.roblox.com/v1/usernames/users",
 					{
 						usernames: [robloxusername],
@@ -86,20 +88,16 @@ module.exports = {
 							"contnet-type": "application/json",
 						},
 					}
-				);
+				)
+				.catch((error) => {
+					console.error(`[ERROR]: ${error}`);
+				});
 
-				if (response.data && response.data.data.length > 0) {
-					userId = response.data.data[0].id;
-					console.log("User ID:", userId);
-				} else {
-					console.log("User not found.");
-				}
-			} catch (error) {
-				if (error.response && error.response.status === 404) {
-					console.log("User not found.");
-				} else {
-					console.error("An error occurred:", error.message);
-				}
+			if (response.data && response.data.data.length > 0) {
+				userId = response.data.data[0].id;
+				console.log("User ID:", userId);
+			} else {
+				console.log("User not found.");
 			}
 
 			if (!response.data || response.data.errors) {
@@ -110,33 +108,168 @@ module.exports = {
 				return;
 			}
 
-			try {
-				let datastore = null;
-				let postresponse = null;
+			datastore = await axios
+				.get(
+					`https://apis.roblox.com/datastores/v1/universes/${UNIVERSE_ID}/standard-datastores/datastore/entries/entry`,
+					{
+						params: {
+							datastoreName: "AdministratorWhilelist",
+							entryKey: ENTRY_KEY,
+						},
+						headers: {
+							"x-api-key": OPENCLOUD_KEY,
+							"Content-Type": "application/json",
+						},
+					}
+				)
+				.catch((error) => {
+					console.error(`[ERRPR]: ${error}`);
+				});
 
-				try {
-					const response = await axios.get(
-						`https://apis.roblox.com/datastores/v1/universes/${UNIVERSE_ID}/standard-datastores/datastore/entries/entry`,
-						{
-							params: {
-								datastoreName: "AdministratorWhilelist",
-								entryKey: ENTRY_KEY,
-							},
-							headers: {
-								"x-api-key": OPENCLOUD_KEY,
-								"Content-Type": "application/json",
-							},
+			const list = datastore.data;
+
+			console.log(list);
+
+			for (const data in list) {
+				if (data.UserId !== userId) {
+					postresponse = await axios
+						.post(
+							`https://apis.roblox.com/datastores/v1/universes/${UNIVERSE_ID}/standard-datastores/datastore/entries/entry`,
+							jsonmeta,
+							{
+								params: {
+									datastoreName: "AdministratorWhilelist",
+									entryKey: ENTRY_KEY,
+								},
+								headers: {
+									"content-md5": content,
+									"x-api-key": OPENCLOUD_KEY,
+									"Content-Type": "application/json",
+								},
+							}
+						)
+						.catch((error) => {
+							console.error(`[ERROR]: ${error}`);
+						});
+
+					const metadata = {
+						Name: robloxusername,
+						Active: active,
+						UserId: userId.toString(),
+						AdminId: `adminuser@${userId.toString()}`,
+					};
+
+					list[Object.keys(list).length + 1] = metadata;
+
+					const jsonmeta = JSON.stringify(list);
+
+					const content = crypto
+						.createHash("md5")
+						.update(jsonmeta)
+						.digest("base64");
+
+					console.log(content);
+
+					if (postresponse) {
+						const embed = new EmbedBuilder()
+							.setAuthor({
+								name: client.user.username,
+								iconURL: client.user.avatarURL(),
+							})
+							.setColor(Colors.Aqua)
+							.setDescription("Registered admin user!")
+							.setFields(
+								{ name: "Name", value: metadata.Name },
+								{ name: "AdminId", value: metadata.AdminId },
+								{ name: "UserId", value: metadata.UserId },
+								{ name: "Active", value: metadata.Active },
+								{
+									name: "API Latency",
+									value:
+										message.createdTimestamp - interaction.createdTimestamp,
+								},
+								{ name: "Client Ping", value: client.ws.ping }
+							)
+							.setFooter({
+								text: client.user.username,
+								iconURL: client.user.avatarURL(),
+							})
+							.setTimestamp()
+							.setTitle("Succeed!");
+
+						try {
+							await interaction.editReply({
+								content: "",
+								embeds: [embed],
+								ephemeral: true,
+							});
+						} catch (error) {
+							console.error(`[ERROR]: ${error}`);
 						}
-					);
-
-					datastore = response
-				} catch (error) {
-					console.error(`[ERROR]: ${error}`)
+					}
 				}
+			}
+		} else {
+			return;
+		}
+		if (subcommand === "modify") {
+			const robloxusername = options.getString("user");
+			const active = options.getBoolean("active");
+			let userId = undefined;
+			let response = undefined;
+			let datastore = undefined;
+			let postresponse = undefined;
 
+			response = await axios
+				.post(
+					"https://users.roblox.com/v1/usernames/users",
+					{
+						usernames: [robloxusername],
+						excludeBannedUsers: true,
+					},
+					{
+						headers: {
+							"contnet-type": "application/json",
+						},
+					}
+				)
+				.catch((error) => {
+					console.error(`[ERROR]: ${error}`);
+				});
+
+			if (response.data && response.data.data.length > 0) {
+				userId = response.data.data[0].id;
+				console.log("User ID:", userId);
+			} else {
+				console.log("User not found.");
+			}
+
+			if (!response.data || response.data.errors) {
+				await interaction.editReply({
+					content: "The provided username does not exist on Roblox.",
+					ephemeral: true,
+				});
+				return;
+			}
+
+			datastore = await axios
+				.get(
+					`https://apis.roblox.com/datastores/v1/universes/${UNIVERSE_ID}/standard-datastores/datastore/entries/entry`,
+					{
+						params: {
+							datastoreName: "AdministratorWhilelist",
+							entryKey: ENTRY_KEY,
+						},
+						headers: { "x-api-key": OPENCLOUD_KEY },
+					}
+				)
+				.catch((error) => {
+					console.error(`[ERROR]: ${error}`);
+				});
+
+			if (datastore.data) {
 				const list = datastore.data;
-
-				console.log(list);
+				let jsonmeta = undefined;
 
 				const metadata = {
 					Name: robloxusername,
@@ -145,21 +278,20 @@ module.exports = {
 					AdminId: `adminuser@${userId.toString()}`,
 				};
 
-				list[Object.keys(list).length + 1] = metadata;
+				for (let index = 0; index < list.length; index++) {
+					if (list[index].UserId === userId) {
+						list[index] = metadata;
+					}
+				}
 
-				const jsonmeta = JSON.stringify(list);
-
-				const content = await crypto
+				const content = crypto
 					.createHash("md5")
 					.update(jsonmeta)
 					.digest("base64");
 
-				console.log(content);
-
-				try {
-					const response = await axios.post(
+				postresponse = await axios
+					.post(
 						`https://apis.roblox.com/datastores/v1/universes/${UNIVERSE_ID}/standard-datastores/datastore/entries/entry`,
-						jsonmeta,
 						{
 							params: {
 								datastoreName: "AdministratorWhilelist",
@@ -171,21 +303,19 @@ module.exports = {
 								"Content-Type": "application/json",
 							},
 						}
-					);
+					)
+					.catch((error) => {
+						console.error(`[ERROR]: ${error}`);
+					});
 
-					postresponse = response
-				} catch (error) {
-					console.error(`[ERROR]: ${error}`)
-				}
-
-				if (postresponse.data) {
+				if (postresponse) {
 					const embed = new EmbedBuilder()
 						.setAuthor({
 							name: client.user.username,
 							iconURL: client.user.avatarURL(),
 						})
-						.setColor(Colors.Aqua)
-						.setDescription("Registered admin user!")
+						.setColor(Colors.Yellow)
+						.setDescription("Midified admin data!")
 						.setFields(
 							{ name: "Name", value: metadata.Name },
 							{ name: "AdminId", value: metadata.AdminId },
@@ -204,18 +334,86 @@ module.exports = {
 						.setTimestamp()
 						.setTitle("Succeed!");
 
-					await interaction.editReply({
-						content: "",
-						embeds: [embed],
-						ephemeral: true,
-					});
+					try {
+						await interaction.editReply({
+							content: "",
+							embeds: [embed],
+							ephemeral: true,
+						});
+					} catch (error) {
+						console.error(`[ERROR]: ${error}`);
+						await interaction.editReply({
+							content: "",
+							embeds: [embed],
+							ephemeral: true,
+						});
+					}
 				}
-			} catch (error) {
-				console.error(`[ERROR]: ${error}`);
+			}
+		} else {
+			return;
+		}
+		if (subcommand === "delete") {
+			const robloxusername = options.getString("user");
+			let userId = undefined;
+			let response = undefined;
+			let datastore = undefined;
+
+			response = await axios
+				.post(
+					"https://users.roblox.com/v1/usernames/users",
+					{
+						usernames: [robloxusername],
+						excludeBannedUsers: true,
+					},
+					{
+						headers: {
+							"contnet-type": "application/json",
+						},
+					}
+				)
+				.catch((error) => {
+					console.error(`[ERROR]: ${error}`);
+				});
+
+			if (response.data && response.data.data.length > 0) {
+				userId = response.data.data[0].id;
+				console.log("User ID:", userId);
+			} else {
+				console.log("User not found.");
+			}
+
+			if (!response.data || response.data.errors) {
 				await interaction.editReply({
-					content: `[ERROR]: ${error}`,
+					content: "The provided username does not exist on Roblox.",
 					ephemeral: true,
 				});
+				return;
+			}
+
+			datastore = await axios
+				.get(
+					`https://apis.roblox.com/datastores/v1/universes/${UNIVERSE_ID}/standard-datastores/datastore/entries/entry`,
+					{
+						params: {
+							datastoreName: "AdministratorWhilelist",
+							entryKey: ENTRY_KEY,
+						},
+						headers: { "x-api-key": OPENCLOUD_KEY },
+					}
+				)
+				.catch((error) => {
+					console.error(`[ERROR]: ${error}`);
+				});
+
+			if (datastore) {
+				const list = datastore.data;
+
+				for (let index = 0; index < list.length; index++) {
+					if (list[index].UserId === userId) {
+						list.splice(index, 1);
+					}
+				}
 			}
 		}
 	},
