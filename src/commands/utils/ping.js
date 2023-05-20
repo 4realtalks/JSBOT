@@ -1,4 +1,10 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const {
+	SlashCommandBuilder,
+	EmbedBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	ActionRowBuilder,
+} = require("discord.js");
 const { Colors } = require("discord.js");
 
 module.exports = {
@@ -11,6 +17,11 @@ module.exports = {
 		}
 
 		const message = await interaction.fetchReply();
+
+		const button = new ButtonBuilder()
+			.setCustomId("youtube")
+			.setLabel("Subscribe to DreamyMythic")
+			.setStyle(ButtonStyle.Danger);
 
 		const embed = new EmbedBuilder()
 			.setAuthor({
@@ -39,7 +50,11 @@ module.exports = {
 			interaction.editReply({ content: "", embeds: [embed] });
 		} catch (error) {
 			console.log(`[ERROR]: ${error}`);
-			interaction.editReply({ content: `[ERROR]: ${error}`, ephemeral: true });
+			interaction.editReply({
+				content: `[ERROR]: ${error}`,
+				ephemeral: true,
+				components: [new ActionRowBuilder().addComponents(button)],
+			});
 		}
 	},
 };
